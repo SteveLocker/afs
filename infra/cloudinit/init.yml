@@ -1,0 +1,32 @@
+#cloud-config
+users:
+  - name: harold
+    gecos: Harold Gutierrez
+    lock_passwd: false
+    expiredate: '2090-09-01'
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/zsh
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMBMbWh7iWMy1rHzdwTIfjGDGJqn14kyRgZzLjh98bPgRGxJhHm/xLyDp+0FRvaEpUMFBtA7AN98ptBU8FSTxQq05ksbvKhdTNm9yt/MgyxQkPdttDDvkhWzlhTggAn+7u7JMhmzmL2CKstViDtpnP/BHvZ5V0grsskXTQhhsHvCu5Oecqxi/OKcBDD8ckaD37YVZc+hb35M2kMLkvXXJz/TdxUa/nM27N/GXTEaRPDNaEUbhrs6d3qKbSXSuKqSuS0U4E3lz34Dv/5NIalRuphetsM/VuWaKf5W+KKYYDXT4RHpZuRZok/To1uLxsmvHrCj50VX+AV/ncgsHoq99/ harold.calderon@Harolds-MacBook-Pro.local
+
+  - name: ansible
+    gecos: Ansible user
+    lock_passwd: false
+    expiredate: '2090-09-01'
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMBMbWh7iWMy1rHzdwTIfjGDGJqn14kyRgZzLjh98bPgRGxJhHm/xLyDp+0FRvaEpUMFBtA7AN98ptBU8FSTxQq05ksbvKhdTNm9yt/MgyxQkPdttDDvkhWzlhTggAn+7u7JMhmzmL2CKstViDtpnP/BHvZ5V0grsskXTQhhsHvCu5Oecqxi/OKcBDD8ckaD37YVZc+hb35M2kMLkvXXJz/TdxUa/nM27N/GXTEaRPDNaEUbhrs6d3qKbSXSuKqSuS0U4E3lz34Dv/5NIalRuphetsM/VuWaKf5W+KKYYDXT4RHpZuRZok/To1uLxsmvHrCj50VX+AV/ncgsHoq99/ harold.calderon@Harolds-MacBook-Pro.local
+
+ssh_pwauth: True
+
+# Set timezone
+timezone: UTC
+
+# Remove cloud-init and download ZSH packages.
+runcmd:
+  - yum -y remove cloud-init
+
+# Configure where output will go
+output:
+  all: ">> /var/log/cloud-init.log"

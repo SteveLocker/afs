@@ -1,0 +1,41 @@
+---
+- name: Test AFS (Acropolis File Service)
+  hosts: all
+  tasks:
+  - name: Install packages
+    ansible.builtin.yum:
+      name:
+        - fio
+        - cifs-utils
+        - samba-client
+        - nc
+        - bind-utils
+      state: present
+  - name: Mount NFS share
+    ansible.posix.mount:
+      path: /mnt
+      src: kappa.emea.nutanix.com:/test
+      fstype: nfs
+      state: mounted
+      opts: sec=none,vers=4,rw
+    tags: mount
+  - name: FIO Test
+    ansible.builtin.command:
+      argv:
+        - fio
+        - --name=fiotest
+        - --filename=/mnt/test/{{ inventory_hostname }}.fio
+        - --size=100Mb
+        - --rw=randrw
+        - --bs=8K
+        - --direct=1
+        - --rwmixread=50
+        - --numjobs=8
+        - --ioengine=libaio
+        - --iodepth=32
+        - --group_reporting
+        - --runtime=60
+        - --startdelay=0
+    register: my_output
+    changed_when: my_output.rc != 0
+    tags: test
