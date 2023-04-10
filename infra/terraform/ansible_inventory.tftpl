@@ -1,0 +1,7 @@
+[${influxdb_vm_name}_group]
+${influxdb_vm_name} ansible_host=${influxdb_vm_ip} influxdb_ip_address=${influxdb_vm_ip} 
+
+[${test_group_name}_group]
+%{ for name, ip in test_vms ~}
+${name} ansible_host=${ip} 
+%{ endfor ~}

@@ -1,0 +1,8 @@
+{
+    "host": "10.66.39.234",
+    "port": 8086,
+    "username": "admin",
+    "password": "nutanix/4u",
+    "ssl": "False",
+    "timeout": 10
+}

@@ -1,0 +1,45 @@
+---
+- name: InfluxDB Server
+  hosts: influxdb_group
+  tasks:
+    - name: InfluxDB APT repository
+      ansible.builtin.yum_repository:
+        name: influxdb
+        description: InfluxData Repository - Stable
+        file: infuxdb_repo
+        baseurl: https://repos.influxdata.com/rhel/$releasever/$basearch/stable
+        gpgkey: https://repos.influxdata.com/influxdata-archive_compat.key
+        enabled: true
+        gpgcheck: true
+    - name: Remove YUM packages
+      ansible.builtin.yum:
+        name:
+          - influxdb2
+          - influxdb2-cli
+        state: absent
+    - name: Install YUM packages
+      ansible.builtin.yum:
+        name:
+          - influxdb
+          - curl
+          - python3-pip
+        state: present
+    - name: Install required pip packages
+      ansible.builtin.pip:
+        name:
+          - requests
+          - influxdb
+    - name: InfluxDB service
+      ansible.builtin.systemd:
+        name: influxdb
+        state: restarted
+        enabled: true
+    - name: InfluxDB database creation
+      community.general.influxdb_database:
+        hostname: "{{ influxdb_ip_address }}"
+        username: "{{ influxdb_username }}"
+        password: "{{ influxdb_password }}"
+        database_name: "{{ influxdb_database_name }}"
+        ssl: false
+        validate_certs: true
+      tags: createdb

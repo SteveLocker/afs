@@ -46,25 +46,45 @@ variable image_source_uri {
   type = string
 }
 
-# VM variables
-variable vm_count {
+# InfluxDB VMs variables
+variable influxdb_vm_name {
+  type = string
+}
+variable influxdb_vm_description {
+  type = string
+}
+variable influxdb_vm_vcpus {
+  type = string
+}
+variable influxdb_vm_sockets {
+  type = string
+}
+variable influxdb_vm_memory {
   type = number
 }
-variable vm_name_prefix {
-  type = string
-}
-variable vm_description {
-  type = string
-}
-variable vm_vcpus {
-  type = string
-}
-variable vm_sockets {
-  type = string
-}
-variable vm_memory {
+
+
+# Test VMs variables
+variable test_vm_count {
   type = number
 }
+variable test_vm_name_prefix {
+  type = string
+}
+variable test_vm_description {
+  type = string
+}
+variable test_vm_vcpus {
+  type = string
+}
+variable test_vm_sockets {
+  type = string
+}
+variable test_vm_memory {
+  type = number
+}
+
+# Cloud-init variables
 variable vm_customization {
   type = string
 }
