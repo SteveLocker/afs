@@ -25,7 +25,7 @@ class Configuration:
             self.config = json.load(f)
 
 
-class dbConnection:
+class DbConnection:
     def __init__(self, host, port, username, password, ssl, timeout) -> None:
         self.host = host
         self.port = port
@@ -59,7 +59,7 @@ class dbConnection:
             return False
 
 
-class nfsStat:
+class NfsStat:
     def __init__(self, job_uuid, fsvm_ip) -> None:
         self.job_uuid = job_uuid
         self.fsvm_ip = fsvm_ip
@@ -92,10 +92,13 @@ class nfsStat:
 
     def get_num_active_clients(self, measurement):
         pattern = "Number of Clients connected:"
-        lines = measurement['nfs.num_active_clients'].split('\n')
-        line = [string for string in lines if re.search(pattern, string)]
-        num_client_connected = line[0].split(':')[1].strip()
-        return int(num_client_connected)
+        res = measurement.get('nfs.num_active_clients')
+        if res is not None:
+            lines = res.split('\n')
+            line = [string for string in lines if re.search(pattern, string)]
+            num_client_connected = line[0].split(':')[1].strip()
+            return int(num_client_connected)
+        return -1
 
     def get_num_active_clients_measurement(self, raw_measurement):
         ret = self.get_num_active_clients(raw_measurement)
@@ -115,23 +118,61 @@ class nfsStat:
     def parse_file(self, file):
         self.load_data(file)
         for m in self.raw_measurements:
-            # res = {}
-            # res['timestamp'] = m['timestamp']
-            # res['num_active_clients'] = self.get_num_active_clients(m)
             self.num_active_clients_measurements.append(
                 self.get_num_active_clients_measurement(m))
+
+
+class Job():
+    def __init__(self, path, db_connection):
+        self.job_uuid = uuid.uuid4()
+        self.path = path
+        self.db_connection = db_connection
+
+    def get_ip_from_file_name(self, filename):
+        regex = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
+        match = regex.search(filename)
+        if match:
+            return match.group()
+        else:
+            return None
+
+    def find_files(self, pattern, path):
+        result = []
+        regex = re.compile(pattern)
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                if regex.match(file):
+                    result.append(os.path.join(root, file))
+        return result
+
+    def parse_nfs_stat_files(self):
+        files = self.find_files('nfsStat', self.path)
+        for f in files:
+            fsvm_ip = self.get_ip_from_file_name(f)
+            print(f"INFO: Analyzing file: {f}")
+            print(f"INFO: FSVM IP: {fsvm_ip}")
+            nfs_stat = NfsStat(self.job_uuid, fsvm_ip)
+            nfs_stat.parse_file(f)
+            print(
+                "INFO: Writing data to InfluxDB: nfs_num_active_clients measurements")
+            self.db_connection.write(
+                nfs_stat.num_active_clients_measurements, 'afs_store')
 
 
 def main():
     parser = argparse.ArgumentParser(description='Analyze AFS performance')
     parser.add_argument(
-        '-f', '--file', help='The file to analyze', required=True)
+        '-d', '--directory', help='Minerva performance bundle directory.', required=True)
+    parser.add_argument(
+        '-f', '--file', help='The file to analyze', required=False)
     args = parser.parse_args()
 
     db_config = Configuration('../etc/db_cfg.json')
     db_config.load_config()
 
-    db = dbConnection(
+    db_config = Configuration('../etc/db_cfg.json')
+    db_config.load_config()
+    db = DbConnection(
         db_config.config['host'],
         db_config.config['port'],
         db_config.config['username'],
@@ -139,19 +180,12 @@ def main():
         db_config.config['ssl'],
         db_config.config['timeout']
     )
-
     db.connect()
 
-    job_uuid = uuid.uuid4()
-    print(f"INFO: Job UUID: {job_uuid}")
+    jb = Job(args.directory, db)
+    print(f"INFO: Job UUID: {jb.job_uuid}")
 
-    # I need to find files in a directory
-    # and then parse them
-
-    ns = nfsStat(job_uuid, "10.66.40.74")
-    ns.parse_file(args.file)
-
-    db.write(ns.num_active_clients_measurements, 'afs_store')
+    jb.parse_nfs_stat_files()
 
 
 if __name__ == "__main__":

@@ -117,12 +117,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 8,
         "w": 12,
         "x": 0,
         "y": 0
       },
-      "id": 2,
+      "id": 6,
       "options": {
         "legend": {
           "calcs": [],
@@ -135,17 +135,60 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "{{ ds.datasource.id }}"
           },
-          "query": "SELECT job_uuid, fsvm_ip, value FROM nfs_num_active_clients WHERE job_uuid = '$job_uuid'",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "fsvm_ip"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "nfs_num_active_clients",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"value\") FROM \"nfs_num_active_clients\" WHERE (\"job_uuid\" =~ /^$job_uuid$/) AND $timeFilter GROUP BY time($__interval), \"fsvm_ip\" fill(null)",
           "rawQuery": true,
           "refId": "A",
-          "resultFormat": "time_series"
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "job_uuid",
+              "operator": "=~",
+              "value": "/^$job_uuid$/"
+            }
+          ]
         }
       ],
       "title": "Panel Title",
@@ -181,13 +224,13 @@
     ]
   },
   "time": {
-    "from": "2023-04-07T23:41:57.106Z",
-    "to": "2023-04-08T00:00:17.195Z"
+    "from": "2023-04-07T23:41:51.189Z",
+    "to": "2023-04-08T00:00:40.168Z"
   },
   "timepicker": {},
   "timezone": "",
   "title": "NFS",
   "uid": "XIA8uUYVz",
-  "version": 2,
+  "version": 1,
   "weekStart": ""
 }
