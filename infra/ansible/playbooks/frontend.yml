@@ -1,0 +1,74 @@
+---
+- name: Frontend Server
+  hosts: frontend_group
+  tasks:
+    - name: Grafana APT repository
+      ansible.builtin.yum_repository:
+        name: grafana
+        description: Grafana repository
+        file: grafana_repo
+        baseurl: https://rpm.grafana.com
+        gpgkey: https://rpm.grafana.com/gpg.key
+        enabled: true
+        gpgcheck: true
+        repo_gpgcheck: true
+        sslverify: true
+        sslcacert: /etc/pki/tls/certs/ca-bundle.crt
+
+    - name: Install YUM packages
+      ansible.builtin.yum:
+        name:
+          - grafana
+        state: present
+
+    - name: Grafana service
+      ansible.builtin.systemd:
+        name: grafana-server
+        state: restarted
+        enabled: true
+
+    - name: Set default admin credentials
+      ansible.builtin.command:
+        cmd: grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password {{ grafana_password }}
+        creates: /home/ansible/.grafana_admin_password
+
+    - name: Create influxdb datasource
+      community.grafana.grafana_datasource:
+        name: "datasource-influxdb"
+        grafana_url: "http://{{ ansible_host }}:3000/"
+        grafana_user: "{{ grafana_username }}"
+        grafana_password: "{{ grafana_password }}"
+        org_id: "1"
+        ds_type: "influxdb"
+        ds_url: "http://{{ hostvars['influxdb']['ansible_host'] }}:8086"
+        database: "afs_store"
+        time_interval: ">10s"
+        validate_certs: false
+      register: ds
+
+    - name: Create dashboard directory
+      ansible.builtin.file:
+        path: /home/ansible/dashboards/
+        state: directory
+        owner: ansible
+        group: ansible
+        mode: '0755'
+
+    - name: Render NFS dashboard
+      ansible.builtin.template:
+        src: templates/dashboards/nfs-dashboard.j2
+        dest: /home/ansible/dashboards/nfs-dashboard.json
+        owner: ansible
+        group: ansible
+        mode: '0644'
+
+    - name: Import Grafana dashboard NFS
+      community.grafana.grafana_dashboard:
+        grafana_url: "http://{{ ansible_host }}:3000/"
+        grafana_user: "{{ grafana_username }}"
+        grafana_password: "{{ grafana_password }}"
+        state: present
+        commit_message: Updated by ansible
+        overwrite: true
+        path: /home/ansible/dashboards/nfs-dashboard.json
+      tags: "dashboard"

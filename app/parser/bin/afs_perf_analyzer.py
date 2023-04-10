@@ -95,7 +95,7 @@ class nfsStat:
         lines = measurement['nfs.num_active_clients'].split('\n')
         line = [string for string in lines if re.search(pattern, string)]
         num_client_connected = line[0].split(':')[1].strip()
-        return num_client_connected
+        return int(num_client_connected)
 
     def get_num_active_clients_measurement(self, raw_measurement):
         ret = self.get_num_active_clients(raw_measurement)

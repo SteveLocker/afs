@@ -1,2 +1,2 @@
-user         = "admin"
-password     = "nx2Tech682!"
+user     = "admin"
+password = "<password>"

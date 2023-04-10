@@ -68,6 +68,28 @@ resource "nutanix_virtual_machine" "influxdb_vm" {
   }
 }
 
+# Frontend VM
+resource "nutanix_virtual_machine" "frontend_vm" {
+  name                                     = var.frontend_vm_name
+  description                              = var.frontend_vm_description
+  cluster_uuid                             = data.nutanix_cluster.cluster.id
+  num_vcpus_per_socket                     = var.frontend_vm_vcpus
+  num_sockets                              = var.frontend_vm_sockets
+  memory_size_mib                          = var.frontend_vm_memory
+  guest_customization_cloud_init_user_data = filebase64(var.vm_customization)
+
+  disk_list {
+    data_source_reference = {
+      kind = "image"
+      uuid = nutanix_image.image.id
+    }
+  }
+
+  nic_list {
+    subnet_uuid = nutanix_subnet.subnet.id
+  }
+}
+
 # Test VMs
 resource "nutanix_virtual_machine" "test_vms" {
   count                                    = var.test_vm_count
@@ -110,12 +132,17 @@ resource "local_file" "ansible_inventory" {
     {
       influxdb_vm_name = var.influxdb_vm_name
       influxdb_vm_ip   = nutanix_virtual_machine.influxdb_vm.nic_list[0].ip_endpoint_list[0].ip
-      test_group_name  = var.test_vm_name_prefix
-      test_vms         = local.test_vm_dict
+
+      frontend_vm_name = var.frontend_vm_name
+      frontend_vm_ip   = nutanix_virtual_machine.frontend_vm.nic_list[0].ip_endpoint_list[0].ip
+
+      test_group_name = var.test_vm_name_prefix
+      test_vms        = local.test_vm_dict
     }
   )
   filename = var.ansible_inventory
 
   provisioner "local-exec" { command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -b -u ansible -i '${var.ansible_inventory}' ../ansible/playbooks/influxdb.yml" }
+  provisioner "local-exec" { command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -b -u ansible -i '${var.ansible_inventory}' ../ansible/playbooks/frontend.yml" }
   # provisioner "local-exec" {command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -b -u ansible -i '${var.ansible_inventory}' ../ansible/playbooks/test_afs.yml"}
 }

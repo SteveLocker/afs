@@ -26,6 +26,13 @@ influxdb_vm_vcpus       = "8"
 influxdb_vm_sockets     = "1"
 influxdb_vm_memory      = "4096"
 
+# Frontend VM
+frontend_vm_name        = "frontend"
+frontend_vm_description = "harold.gutierrez@nutanix.com"
+frontend_vm_vcpus       = "8"
+frontend_vm_sockets     = "1"
+frontend_vm_memory      = "4096"
+
 # Test VMs variables
 test_vm_count       = "3"
 test_vm_name_prefix = "test"

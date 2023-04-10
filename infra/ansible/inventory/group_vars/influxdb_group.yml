@@ -1,0 +1,4 @@
+---
+influxdb_username: admin
+influxdb_password: <password>
+influxdb_database_name: afs_store
