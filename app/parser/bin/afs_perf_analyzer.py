@@ -65,6 +65,7 @@ class NfsStat:
         self.fsvm_ip = fsvm_ip
         self.raw_measurements = []
         self.num_active_clients_measurements = []
+        self.nfs_client_stats = []
 
     def load_data(self, file):
         """Load data from file"""
@@ -115,11 +116,56 @@ class NfsStat:
         res['fields'] = {'value': ret}
         return res
 
+    def get_nfs_client_stats(self, raw_measurement):
+        res = raw_measurement.get('nfs.client_stats')
+
+        mtime = datetime.datetime.fromtimestamp(
+            int(raw_measurement['timestamp'].split(' : ')[0]))
+
+        ret = []
+        if res is not None:
+            lines = res.split('\n')
+            for line in lines:
+                line = line.strip()
+                if line != '' and "nfs.client_stats" not in line and "Timestamp" not in line:
+                    meassure = {}
+
+                    line = line.split()
+                    if len(line) < 13:
+                        continue
+
+                    client_ip = line[2]
+                    if len(client_ip.split(':')) > 3:
+                        client_ip = client_ip.split(':')[3]
+
+                    meassure['measurement'] = 'nfs_client_stats'
+                    meassure['time'] = mtime.strftime('%Y-%m-%dT%H:%M:%SZ')
+                    meassure['tags'] = {
+                        'job_uuid': f"{self.job_uuid}",
+                        'fsvm_ip': f"{self.fsvm_ip}",
+                        'client_ip': client_ip
+                    }
+                    meassure['fields'] = {
+                        'r_mb': float(line[3]),
+                        'r_latency': float(line[5]),
+                        'r_ios': int(line[7]),
+                        'w_mb': float(line[8]),
+                        'w_latency': float(line[10]),
+                        'w_ios': int(line[12])
+                    }
+                    ret.append(meassure)
+            return ret
+        return []
+
     def parse_file(self, file):
         self.load_data(file)
         for m in self.raw_measurements:
             self.num_active_clients_measurements.append(
                 self.get_num_active_clients_measurement(m))
+
+            res = self.get_nfs_client_stats(m)
+            if len(res) > 1:
+                self.nfs_client_stats.extend(res)
 
 
 class Job():
@@ -154,9 +200,15 @@ class Job():
             nfs_stat = NfsStat(self.job_uuid, fsvm_ip)
             nfs_stat.parse_file(f)
             print(
-                "INFO: Writing data to InfluxDB: nfs_num_active_clients measurements")
+                "INFO: Writing NfsStat data to InfluxDB: nfs_num_active_clients measurements")
+
+            # print(nfs_stat.num_active_clients_measurements)
             self.db_connection.write(
                 nfs_stat.num_active_clients_measurements, 'afs_store')
+
+            # print(nfs_stat.nfs_client_stats)
+            self.db_connection.write(
+                nfs_stat.nfs_client_stats, 'afs_store')
 
 
 def main():
