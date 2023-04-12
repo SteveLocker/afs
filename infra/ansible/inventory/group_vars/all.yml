@@ -1,0 +1,4 @@
+---
+influxdb_username: admin
+influxdb_password: nutanix/4u
+influxdb_database_name: afs_store

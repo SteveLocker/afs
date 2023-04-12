@@ -1,5 +1,5 @@
 {
-    "host": {{ hostvars[influxdb]['ansible_' ~ which_interface]['ipv4']['address'] }},
+    "host": {{ influxdb_host }},
     "port": 8086,
     "username": "{{ influxdb_username }}",
     "password": "{{ influxdb_password }}",

@@ -31,7 +31,10 @@
     - name: Generate and copy db_cfg.json
       ansible.builtin.template:
         src: templates/influxdb/influxdb_conf.j2
-        dest: app/parser/etc/db_cfg.json
+        dest: '{{ dest_path_script }}/parser/etc/db_cfg.json'
         owner: root
         group: root
         mode: '0755'
+      vars:
+        - influxdb_host: "{{ hostvars['influxdb']['ansible_host'] }}"
+
