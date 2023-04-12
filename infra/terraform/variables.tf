@@ -82,6 +82,24 @@ variable "frontend_vm_memory" {
 }
 
 
+# Worker VMs variables
+variable "worker_vm_name" {
+  type = string
+}
+variable "worker_vm_description" {
+  type = string
+}
+variable "worker_vm_vcpus" {
+  type = string
+}
+variable "worker_vm_sockets" {
+  type = string
+}
+variable "worker_vm_memory" {
+  type = number
+}
+
+
 # Test VMs variables
 variable "test_vm_count" {
   type = number

@@ -1,6 +1,6 @@
 # Endpoint variables (Prism Central)
-endpoint     = "10.66.39.99"
-cluster_name = "FatalFrame"
+endpoint     = "10.66.39.94"
+cluster_name = "wtfix"
 
 # Subnet variables
 subnet_name   = "ipam"
@@ -32,6 +32,13 @@ frontend_vm_description = "harold.gutierrez@nutanix.com"
 frontend_vm_vcpus       = "8"
 frontend_vm_sockets     = "1"
 frontend_vm_memory      = "4096"
+
+# Worker VM
+worker_vm_name        = "worker"
+worker_vm_description = "harold.gutierrez@nutanix.com"
+worker_vm_vcpus       = "8"
+worker_vm_sockets     = "1"
+worker_vm_memory      = "8192"
 
 # Test VMs variables
 test_vm_count       = "3"

@@ -1,0 +1,37 @@
+---
+- name: Worker
+  hosts: worker_group
+  tasks:
+    - name: Install YUM packages
+      ansible.builtin.yum:
+        name:
+          - python
+        state: present
+
+    - name: Create app directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+        recurse: true
+      with_items:
+        - "{{ dest_path_bundles }}"
+        - "{{ dest_path_script }}"
+
+    - name: Copy the parser script to worker
+      ansible.builtin.copy:
+        src: "{{ app_local_path }}"
+        dest: "{{ dest_path_script }}"
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Generate and copy db_cfg.json
+      ansible.builtin.template:
+        src: templates/influxdb/influxdb_conf.j2
+        dest: app/parser/etc/db_cfg.json
+        owner: root
+        group: root
+        mode: '0755'

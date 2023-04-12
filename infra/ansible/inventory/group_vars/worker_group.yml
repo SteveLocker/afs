@@ -1,0 +1,6 @@
+---
+worker_username: root
+worker_password: nutanix/4u
+dest_path_script: /opt/afs_parser/
+dest_path_bundles: /mnt/afs_parser_bundles/
+app_local_path: ../../../app/parser

@@ -90,6 +90,28 @@ resource "nutanix_virtual_machine" "frontend_vm" {
   }
 }
 
+# Worker VM
+resource "nutanix_virtual_machine" "worker_vm" {
+  name                                     = var.worker_vm_name
+  description                              = var.worker_vm_description
+  cluster_uuid                             = data.nutanix_cluster.cluster.id
+  num_vcpus_per_socket                     = var.worker_vm_vcpus
+  num_sockets                              = var.worker_vm_sockets
+  memory_size_mib                          = var.worker_vm_memory
+  guest_customization_cloud_init_user_data = filebase64(var.vm_customization)
+
+  disk_list {
+    data_source_reference = {
+      kind = "image"
+      uuid = nutanix_image.image.id
+    }
+  }
+
+  nic_list {
+    subnet_uuid = nutanix_subnet.subnet.id
+  }
+}
+
 # Test VMs
 resource "nutanix_virtual_machine" "test_vms" {
   count                                    = var.test_vm_count
@@ -121,7 +143,7 @@ locals {
 }
 
 resource "time_sleep" "wait_30_seconds" {
-  depends_on      = [nutanix_virtual_machine.test_vms, nutanix_virtual_machine.influxdb_vm]
+  depends_on      = [nutanix_virtual_machine.test_vms, nutanix_virtual_machine.influxdb_vm, nutanix_virtual_machine.frontend_vm, nutanix_virtual_machine.worker_vm]
   create_duration = "30s"
 }
 
@@ -136,6 +158,9 @@ resource "local_file" "ansible_inventory" {
       frontend_vm_name = var.frontend_vm_name
       frontend_vm_ip   = nutanix_virtual_machine.frontend_vm.nic_list[0].ip_endpoint_list[0].ip
 
+      worker_vm_name = var.worker_vm_name
+      worker_vm_ip   = nutanix_virtual_machine.worker_vm.nic_list[0].ip_endpoint_list[0].ip
+
       test_group_name = var.test_vm_name_prefix
       test_vms        = local.test_vm_dict
     }
@@ -144,5 +169,7 @@ resource "local_file" "ansible_inventory" {
 
   provisioner "local-exec" { command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -b -u ansible -i '${var.ansible_inventory}' ../ansible/playbooks/influxdb.yml" }
   provisioner "local-exec" { command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -b -u ansible -i '${var.ansible_inventory}' ../ansible/playbooks/frontend.yml" }
+  provisioner "local-exec" { command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -b -u ansible -i '${var.ansible_inventory}' ../ansible/playbooks/worker.yml" }
+
   # provisioner "local-exec" {command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -b -u ansible -i '${var.ansible_inventory}' ../ansible/playbooks/test_afs.yml"}
 }
