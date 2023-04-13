@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>My Grafana Dashboard</title>
+    <style>
+        /* Add styles for the ribbon */
+        .ribbon {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background-color: grey;
+            color: white;
+            text-align: left;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            padding-top: 10px;
+            background-image: url(static/logo.png);
+            background-repeat: no-repeat;
+            background-position: left center;
+            background-size: contain;
+        }
+
+        /* Add styles for the dashboard iframe */
+        #dashboard-iframe {
+            margin-top: 50px;
+            /* Add a margin-top to match the height of the ribbon */
+            width: 100%;
+            height: calc(100% - 50px);
+            border: none;
+            min-height: 1200px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ribbon">PAFS</div>
+    <div class="jobDropdown">
+        <h2>Job IDs:</h2>
+        <select id="jobIdSelect">
+            {% for job in job_uuids %}
+            <option value="{{job}}">{{job}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <iframe id="dashboardIframe"
+        src="http://{{ pafs_ip }}/grafana/d/XIA8uUYVz/nfs?orgId=1&amp;var-job_uuid=3ebd5ab4-b6a6-4b9f-83da-07aba16ed711&amp;from=1680910911189&amp;to=1680912040168&amp;kiosk&amp;theme=light"
+        width="100%" height="1200">>
+    </iframe>
+
+    <script>
+        // Get the dashboard iframe element
+        var dashboardIframe = document.getElementById('dashboardIframe');
+
+        // Get the height of the dashboard inside the iframe
+        //var dashboardHeight = dashboardIframe.contentWindow.document.getElementById('dashboard').offsetHeight;
+
+        // Set the height of the iframe to match the height of the dashboard
+        //dashboardIframe.style.height = dashboardHeight + 'px';
+        // Add event listener for job id select change
+        var jobIdSelect = document.getElementById('jobIdSelect');
+
+        jobIdSelect.onchange = function () {
+            // Get the selected job id
+            var selectedJobId = this.value;
+
+            console.log('Hello!');
+
+            // Update the dashboard URL with the selected job id
+            var dashboardUrl = 'http://{{ pafs_ip }}/grafana/d/XIA8uUYVz/nfs?orgId=1&amp;var-job_uuid=' + selectedJobId + '&amp;from=1680910911189&amp;to=1680912040168&amp;kiosk&amp;theme=light';
+            dashboardIframe.src = dashboardUrl;
+
+            // Reload the dashboard iframe to ensure it loads with the new URL
+            dashboardIframe.contentWindow.location.reload();
+        };
+    </script>
+</body>
+
+</html>

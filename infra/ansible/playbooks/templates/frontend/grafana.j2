@@ -1,0 +1,16 @@
+[log]
+level=info
+
+[server]
+protocol=http
+http_port = 3000
+root_url = http://localhost:3000/grafana
+serve_from_sub_path = true
+
+[security]
+allow_embedding = true
+
+[auth.anonymous]
+enabled = true
+org_name = "Anonymous"
+org_role = "Viewer"

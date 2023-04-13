@@ -1,0 +1,20 @@
+<VirtualHost 10.66.39.233:80>
+
+    ProxyPreserveHost On
+    ServerName localhost
+
+    # This seems to be required for Grafana
+    RewriteRule ^/grafana$ grafana/ [R]
+
+
+    ProxyPass /grafana http://127.0.0.1:3000/grafana
+    ProxyPassReverse /grafana http://127.0.0.1:3000/grafana
+
+    ProxyPass /pafs http://127.0.0.1:5000/
+    ProxyPassReverse /pafs http://127.0.0.1:5000/
+
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Headers "origin, x-requested-with, content-type"
+    Header set Access-Control-Allow-Methods "PUT, GET, POST, DELETE, OPTIONS"
+
+</VirtualHost>

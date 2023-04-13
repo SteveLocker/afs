@@ -1,0 +1,18 @@
+[Unit]
+Description={{ service_description }}
+After=network.target
+
+[Service]
+WorkingDirectory={{ dest_path_frontend }}/frontend
+Environment="FLASK_APP={{ dest_path_frontend }}/frontend/app.py" 
+Environment="PAFS_IP={{ ansible_host }}"
+Type=simple
+User=root
+StandardOutput=journal+console
+ExecStart=/usr/bin/python3 /usr/local/bin/flask run --host=127.0.0.1 --port=5000 --debug
+StandardOutput=file:/var/log/pafs.out.log
+StandardError=file:/var/log/pafs.err.log
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

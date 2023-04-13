@@ -1,3 +1,6 @@
 ---
 grafana_username: admin
 grafana_password: <password>
+dest_path_frontend: /opt/pafs
+local_path_frontend: ../../../app/frontend
+service_description: PAFS service

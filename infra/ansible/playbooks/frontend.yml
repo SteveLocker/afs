@@ -19,7 +19,24 @@
       ansible.builtin.yum:
         name:
           - grafana
+          - python3-pip
+          - httpd
         state: present
+
+    - name: Install required pip packages
+      ansible.builtin.pip:
+        name:
+          - requests
+          - influxdb
+          - flask
+
+    - name: Copy Grafana configuration file
+      ansible.builtin.copy:
+        src: templates/frontend/grafana.j2
+        dest: /etc/grafana/grafana.ini
+        owner: root
+        group: root
+        mode: '0644'
 
     - name: Grafana service
       ansible.builtin.systemd:
@@ -72,3 +89,79 @@
         overwrite: true
         path: /home/ansible/dashboards/nfs-dashboard.json
       tags: "dashboard"
+
+    - name: Create frontend app directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+        recurse: true
+      with_items:
+        - "{{ dest_path_frontend }}"
+      tags: frontend
+
+    - name: Copy the frontend application
+      ansible.builtin.copy:
+        src: "{{ local_path_frontend }}"
+        dest: "{{ dest_path_frontend }}"
+        owner: root
+        group: root
+        mode: '0755'
+      tags: frontend
+
+    - name: Generate and copy db_cfg.json
+      ansible.builtin.template:
+        src: templates/influxdb/influxdb_conf.j2
+        dest: '{{ dest_path_frontend }}/frontend/etc/db_cfg.json'
+        owner: root
+        group: root
+        mode: '0755'
+      vars:
+        - influxdb_host: "{{ hostvars['influxdb']['ansible_host'] }}"
+      tags: frontend
+
+    - name: Create systemd service script
+      ansible.builtin.template:
+        src: templates/frontend/pafs.service.j2
+        dest: /lib/systemd/system/pafs.service
+        owner: root
+        group: root
+        mode: '0644'
+      tags: frontend
+
+    - name: PAFS service start
+      ansible.builtin.systemd:
+        name: pafs
+        state: restarted
+        enabled: true
+      tags: frontend
+
+    - name: Configure Apache to proxy requests to PAFS
+      ansible.builtin.copy:
+        src: templates/frontend/pafs.http.j2
+        dest: /etc/httpd/conf.d/pafs.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart apache
+      tags: frontend
+
+    - name: Change the httpd_t domain to permissive
+      community.general.selinux_permissive:
+        name: httpd_t
+        permissive: true
+      tags: frontend
+
+    - name: HTTP service start
+      ansible.builtin.systemd:
+        name: httpd
+        state: restarted
+        enabled: true
+      tags: frontend
+  post_tasks:
+    - name: Print message at the end of playbook
+      ansible.builtin.meta:
+        end_play:
+          msg: "\n\n====>>> Aplication deployed at http://{{ ansible_host }}/pafs/ <<<====\n\n"
